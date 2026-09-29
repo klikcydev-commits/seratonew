@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; media-src file:; img-src 'self' data:">
+  <title>Set Builder</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Set Builder</h1>
+    <span class="sub">Client song list → Serato crates</span>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>1 · Setup</h2>
+      <label class="field">
+        <span>Event / client name</span>
+        <input id="eventName" type="text" placeholder="e.g. Jalal &amp; Lara Wedding" maxlength="120">
+      </label>
+
+      <div class="field">
+        <span>Music folders</span>
+        <ul id="folders" class="chips"></ul>
+        <div class="row">
+          <button id="addFolder" class="secondary">Add folder…</button>
+          <button id="scan">Scan library</button>
+          <span id="scanStatus" class="muted"></span>
+        </div>
+      </div>
+
+      <div class="field">
+        <span>Serato folder</span>
+        <div class="row">
+          <code id="seratoDir"></code>
+          <button id="pickSerato" class="secondary">Change…</button>
+        </div>
+        <small class="muted">Close Serato DJ before creating crates, then reopen it to see them.</small>
+      </div>
+
+      <div class="field">
+        <span>Reports &amp; copies go to</span>
+        <div class="row">
+          <code id="outputDir"></code>
+          <button id="pickOutput" class="secondary">Change…</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>2 · Paste the client's list</h2>
+      <textarea id="listInput" spellcheck="false" placeholder="Melodies:
+Ed Sheeran - Perfect
+Adele - Make You Feel My Love
+
+Formality:
+Clair de Lune - Debussy
+
+Slow dance:
+https://open.spotify.com/playlist/...
+
+Cake cutting:
+Sugar | play when the knife goes in
+
+Paste text or Spotify / YouTube / Apple Music links (songs or playlists), or drop a file here."></textarea>
+      <div class="row">
+        <button id="find">Find songs</button>
+        <button id="importFile" class="secondary">Import file…</button>
+        <span class="muted">Files: .csv .txt .m3u .docx. Headers end with “:”. Add a per-song note after “|”.</span>
+      </div>
+    </section>
+
+    <section id="results" class="card" hidden>
+      <h2>3 · Review</h2>
+      <div id="summary" class="summary"></div>
+      <div id="sections"></div>
+      <div class="actions">
+        <button id="makeCrates">Create Serato crates</button>
+        <button id="exportReport" class="secondary">Export report (CSV / HTML / playlists)</button>
+        <button id="collect" class="secondary">Copy tracks into folders</button>
+      </div>
+      <div id="message" class="message" hidden></div>
+    </section>
+  </main>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
