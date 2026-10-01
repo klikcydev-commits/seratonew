@@ -59,3 +59,22 @@ test('unknown songs are missing with nothing pre-selected', () => {
 test('tokenize drops parentheticals and stopwords', () => {
   assert.deepStrictEqual(tokenize('The Weeknd - Blinding Lights (Official Audio)'), ['weeknd', 'blinding', 'lights']);
 });
+
+const { searchLibrary } = require('../core/matcher');
+
+test('searchLibrary: partial title / artist / file name, exact title first, copies collapsed', () => {
+  const titles = searchLibrary(lib, 'perf').map((c) => c.title);
+  assert.ok(titles.includes('Perfect') && titles.includes('Perfect Duet'));
+  const exact = searchLibrary(lib, 'perfect');
+  assert.strictEqual(exact[0].title, 'Perfect');
+  assert.strictEqual(exact[0].duplicates, 1); // mp3 + flac of the same song
+  assert.match(searchLibrary(lib, 'adele love')[0].path, /Adele/); // file with no tags
+  assert.match(searchLibrary(lib, 'sheeran')[0].path, /Ed Sheeran/);
+  assert.strictEqual(searchLibrary(lib, 'كيفك انت')[0].artist, 'فيروز'); // Arabic, hamza-insensitive
+});
+
+test('searchLibrary: typo falls back to fuzzy, empty query returns nothing', () => {
+  assert.strictEqual(searchLibrary(lib, 'Yelow')[0].title, 'Yellow');
+  assert.deepStrictEqual(searchLibrary(lib, '   '), []);
+  assert.deepStrictEqual(searchLibrary(lib, 'zzzzqqq'), []);
+});

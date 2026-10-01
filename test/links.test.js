@@ -164,3 +164,19 @@ test('expandLinks leaves plain text untouched', async () => {
   assert.strictEqual(text, 'Melodies:\nAdele - Hello');
   assert.deepStrictEqual(notes, []);
 });
+
+test('expandLinks: many single-song links become ONE section; list numbers are not section names', async () => {
+  const ids = ['4uLU6hMCjMI75M1A2tKUQC', '4uLU6hMCjMI75M1A2tKUQD', '4uLU6hMCjMI75M1A2tKUQE'];
+  const pages = { 'https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M': SPOTIFY_PLAYLIST };
+  ids.forEach((id) => { pages[`https://open.spotify.com/embed/track/${id}`] = SPOTIFY_TRACK; });
+  const fetchImpl = async (url) => (pages[url] ? fakeRes(200, pages[url]) : fakeRes(404));
+  const input = [
+    `48 https://open.spotify.com/track/${ids[0]}`,
+    `49. https://open.spotify.com/track/${ids[1]}`,
+    `https://open.spotify.com/track/${ids[2]}`,
+    'https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M',
+  ].join('\n');
+  const { text, notes } = await expandLinks(input, { fetchImpl });
+  assert.deepStrictEqual(parseList(text).map((s) => [s.name, s.songs.length]), [['Unsorted', 3], ['Wedding Slow Dances', 3]]);
+  assert.ok(notes.some((n) => /Spotify: 3 single songs/.test(n.text)));
+});

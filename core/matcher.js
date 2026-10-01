@@ -83,6 +83,7 @@ function makeEntry({ path: p, artist = '', title = '' }) {
     all,
     allArr: [...all],
     fingerprint: [...new Set(core)].sort().join(' '),
+    hay: fold(`${a} ${t} ${base}`),
   };
 }
 
@@ -152,6 +153,33 @@ function rankCandidates(index, query, limit = 5) {
   return out;
 }
 
+/** Plain "contains" search over title, artist and file name, for looking a song up by hand. */
+function searchLibrary(index, query, limit = 40) {
+  const q = fold(query).trim();
+  const words = q.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  if (!words.length) return [];
+  const hits = [];
+  for (const e of index.entries) {
+    if (!words.every((w) => e.hay.includes(w))) continue;
+    const t = fold(e.title).trim();
+    hits.push({ e, rank: t === q ? 0 : t.startsWith(q) ? 1 : 2 });
+  }
+  if (!hits.length) return rankCandidates(index, query, limit).map((c) => ({ ...c, manual: true })); // typo-tolerant fallback
+  hits.sort((a, b) => a.rank - b.rank || a.e.hay.length - b.e.hay.length || a.e.path.localeCompare(b.e.path));
+  const seen = new Map();
+  const out = [];
+  for (const h of hits) {
+    const key = h.e.fingerprint || h.e.path;
+    const dup = seen.get(key);
+    if (dup) { dup.duplicates += 1; continue; }
+    if (out.length >= limit) continue;
+    const c = { path: h.e.path, artist: h.e.artist, title: h.e.title, score: 1, duplicates: 0, manual: true };
+    seen.set(key, c);
+    out.push(c);
+  }
+  return out;
+}
+
 const MATCH_MIN = 0.8;
 const MATCH_GAP = 0.08;
 const REVIEW_MIN = 0.5;
@@ -182,4 +210,4 @@ function matchAll(index, sections) {
   }));
 }
 
-module.exports = { tokenize, buildIndex, makeEntry, rankCandidates, matchSong, matchAll, levenshtein };
+module.exports = { tokenize, buildIndex, makeEntry, rankCandidates, searchLibrary, matchSong, matchAll, levenshtein };

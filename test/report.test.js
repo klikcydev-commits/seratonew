@@ -50,7 +50,8 @@ test('writeReports + collectFiles produce the expected files', async () => {
   assert.strictEqual(r.playlists.length, 1);
   const c = await collectFiles(out, 'My Event', secs);
   assert.strictEqual(c.copied, 1);
-  assert.ok(fs.existsSync(path.join(c.root, '01 Slow dance', '01 - perfect.mp3')));
+  assert.ok(fs.existsSync(path.join(c.root, 'Slow dance', 'perfect.mp3'))); // plain folder, original file name
+  assert.ok(r.dir.endsWith('My Event - Report')); // reports stay out of the song folders
 });
 
 test('safety: only files inside scanned folders are accepted', () => {
@@ -78,4 +79,23 @@ test('scanLibrary walks audio files, skips hidden/_Serato_, caches results', asy
   assert.ok(fs.existsSync(cachePath));
   const second = await scanLibrary([lib], { cachePath });
   assert.strictEqual(second.length, 2);
+});
+
+test('collectFiles: one flat folder per section, no Tracks/numbering, duplicate names kept, empty sections skipped', async () => {
+  const out = tmp();
+  const a = path.join(tmp(), 'Song.mp3');
+  const b = path.join(tmp(), 'Song.mp3'); // same file name, different folder
+  fs.writeFileSync(a, 'a');
+  fs.writeFileSync(b, 'b');
+  const pick = (p) => ({ requested: 'x', note: '', status: 'matched', chosen: { path: p, artist: '', title: '', score: 1 } });
+  const secs = [
+    { name: 'Wedding Playlist', items: [pick(a), pick(b), pick(a)] },
+    { name: 'Formalities', items: [pick(a)] },
+    { name: 'Empty', items: [{ requested: 'y', note: '', status: 'missing', chosen: null }] },
+  ];
+  const r = await collectFiles(out, 'Ev', secs);
+  assert.deepStrictEqual(fs.readdirSync(r.root).sort(), ['Formalities', 'Wedding Playlist']);
+  assert.deepStrictEqual(fs.readdirSync(path.join(r.root, 'Wedding Playlist')).sort(), ['Song (2).mp3', 'Song.mp3']);
+  assert.deepStrictEqual(r.folders.map((f) => [f.name, f.count]), [['Wedding Playlist', 2], ['Formalities', 1]]);
+  assert.strictEqual(r.copied, 3);
 });

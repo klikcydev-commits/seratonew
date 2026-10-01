@@ -70,7 +70,7 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:6px 8px;
 
 function writeReports(outDir, eventName, sections) {
   const base = safeName(eventName);
-  const dir = path.join(outDir, base);
+  const dir = path.join(outDir, `${base} - Report`); // kept apart from the song folders
   const playlists = path.join(dir, 'playlists');
   fs.mkdirSync(playlists, { recursive: true });
 
@@ -89,29 +89,53 @@ function writeReports(outDir, eventName, sections) {
   return { dir, csv, html, playlists: m3u };
 }
 
+function uniqueName(used, name) {
+  const key = (n) => n.toLowerCase();
+  if (!used.has(key(name))) { used.add(key(name)); return name; }
+  const ext = path.extname(name);
+  const stem = name.slice(0, name.length - ext.length);
+  for (let i = 2; ; i++) {
+    const candidate = `${stem} (${i})${ext}`;
+    if (!used.has(key(candidate))) { used.add(key(candidate)); return candidate; }
+  }
+}
+
+/**
+ * Copies the chosen songs into <outDir>/<Event>/<Section>/<song file>.
+ * One plain folder per playlist/moment, songs directly inside, original file names,
+ * so each folder can be dragged into Serato (or onto a USB stick) as it is.
+ */
 async function collectFiles(outDir, eventName, sections, onProgress) {
-  const root = path.join(outDir, safeName(eventName), 'Tracks');
-  let copied = 0;
+  const root = path.join(outDir, safeName(eventName));
+  const usedFolders = new Set();
+  const folders = [];
   const failed = [];
-  for (let si = 0; si < sections.length; si++) {
-    const s = sections[si];
-    const folder = path.join(root, `${String(si + 1).padStart(2, '0')} ${safeName(s.name)}`);
+  let copied = 0;
+  for (const s of sections) {
+    const picks = s.items.filter((it) => it.chosen);
+    if (!picks.length) continue;
+    const name = uniqueName(usedFolders, safeName(s.name));
+    const folder = path.join(root, name);
     fs.mkdirSync(folder, { recursive: true });
-    let n = 0;
-    for (const it of s.items) {
-      if (!it.chosen) continue;
-      n += 1;
-      const dest = path.join(folder, `${String(n).padStart(2, '0')} - ${path.basename(it.chosen.path)}`);
+    const usedFiles = new Set();
+    const seen = new Set();
+    let count = 0;
+    for (const it of picks) {
+      if (seen.has(it.chosen.path)) continue;
+      seen.add(it.chosen.path);
+      const dest = path.join(folder, uniqueName(usedFiles, path.basename(it.chosen.path)));
       try {
         await fs.promises.copyFile(it.chosen.path, dest);
         copied += 1;
+        count += 1;
       } catch (e) {
         failed.push({ file: it.chosen.path, error: e.message });
       }
       if (onProgress) onProgress({ copied, failed: failed.length });
     }
+    folders.push({ name, path: folder, count });
   }
-  return { root, copied, failed };
+  return { root, folders, copied, failed };
 }
 
 module.exports = { toCsv, toM3u8, toHtml, writeReports, collectFiles };

@@ -7,7 +7,7 @@ Paste a client's song list → the app finds each track in your library → crea
 ```bash
 npm install
 npm start          # launch the app
-npm test           # 42 tests for the core logic
+npm test           # 46 tests for the core logic
 npm run dist       # build a .dmg (macOS) / installer (Windows)
 ```
 
@@ -36,10 +36,11 @@ npm run dist       # build a .dmg (macOS) / installer (Windows)
    https://music.apple.com/us/playlist/...     ← its own section, named after the playlist
    ```
    **Import file…** (or drag a file onto the box) accepts `.csv` (Exportify, TuneMyMusic, Soundiiz, or your own sheet with Moment / Artist / Title / Notes columns), `.txt`, `.m3u/.m3u8` and `.docx`. Excel: Save As → CSV. PDFs and screenshots are not supported yet.
-3. **Review.** Green = confident match, amber = check it (several candidates or a partial match), red = not in your library. Use the dropdown to pick another version, ▶ to preview, or type in the row's search box + Enter to search manually.
+   Single-song links (one song each) all go into one **Unsorted** section instead of one section per song; put a header above them to name it. A number in front of a link (`48 https://…`) is ignored.
+3. **Review.** Every line shows the song the client asked for plus a label: **Found**, **Check** (several candidates or a partial match) or **Not found**. Click **All / found / to check / not found** at the top to see only those songs in one combined list. Use the dropdown to pick another version, ▶ to preview, × to drop a line, or type in the row's search box: it searches inside the folders you scanned as you type (Enter picks the top hit). The **Search your library** card does the same for any title or artist and can add the song to a section.
 4. **Create Serato crates** – **close Serato DJ first**, then reopen it. You get a parent crate named after the event with one sub-crate per moment. Re-running backs up the previous crate as `.crate.bak`.
    - **Export report** – CSV, HTML, and one `.m3u8` playlist per moment.
-   - **Copy tracks into folders** – numbered copies of the tracks, one folder per moment.
+   - **Copy songs into folders** – `<output folder>/<Event>/<Playlist or moment>/<songs>`: one plain folder per playlist/moment, songs directly inside with their original file names. Drag a folder onto Serato's crate list to make a crate yourself. Reports go in a separate `<Event> - Report` folder.
 
 ## Notes
 

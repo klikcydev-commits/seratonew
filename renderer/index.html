@@ -13,6 +13,8 @@
   </header>
 
   <main>
+    <div id="message" class="message" hidden role="status"></div>
+
     <section class="card">
       <h2>1 · Setup</h2>
       <label class="field">
@@ -40,7 +42,7 @@
       </div>
 
       <div class="field">
-        <span>Reports &amp; copies go to</span>
+        <span>Reports &amp; copied songs go to</span>
         <div class="row">
           <code id="outputDir"></code>
           <button id="pickOutput" class="secondary">Change…</button>
@@ -71,6 +73,18 @@ Paste text or Spotify / YouTube / Apple Music links (songs or playlists), or dro
       </div>
     </section>
 
+    <section class="card">
+      <h2>Search your library</h2>
+      <div class="row">
+        <input id="libSearch" type="text" placeholder="Type a song title or artist…" aria-label="Search your library" autocomplete="off">
+        <label class="inline">Add to
+          <select id="addTarget" aria-label="Section to add to"></select>
+        </label>
+      </div>
+      <div id="libCount" class="muted"></div>
+      <div id="libResults" class="libresults"></div>
+    </section>
+
     <section id="results" class="card" hidden>
       <h2>3 · Review</h2>
       <div id="summary" class="summary"></div>
@@ -78,9 +92,9 @@ Paste text or Spotify / YouTube / Apple Music links (songs or playlists), or dro
       <div class="actions">
         <button id="makeCrates">Create Serato crates</button>
         <button id="exportReport" class="secondary">Export report (CSV / HTML / playlists)</button>
-        <button id="collect" class="secondary">Copy tracks into folders</button>
+        <button id="collect" class="secondary">Copy songs into folders</button>
       </div>
-      <div id="message" class="message" hidden></div>
+      <p class="muted tip">“Copy songs into folders” makes one plain folder per playlist / moment with the songs directly inside. Drag a folder onto Serato’s crate list to turn it into a crate yourself, or use “Create Serato crates” to do it automatically.</p>
     </section>
   </main>
 

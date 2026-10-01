@@ -237,7 +237,7 @@ async function loadSpotify(cls, o) {
     if (!c || c.service !== 'spotify' || c.kind === 'short') throw new Error('could not resolve this short link; paste the full open.spotify.com link');
   }
   const { text } = await safeFetch(`https://open.spotify.com/embed/${c.kind}/${c.id}`, o);
-  return { source: 'Spotify', ...parseSpotify(text) };
+  return { source: 'Spotify', ...parseSpotify(text), single: c.kind === 'track' };
 }
 
 async function loadYouTube(cls, o) {
@@ -251,12 +251,13 @@ async function loadYouTube(cls, o) {
   const j = JSON.parse(text);
   const song = videoToSong({ title: j.title, channel: j.author_name });
   if (!song.title) throw new Error('no title found');
-  return { source: 'YouTube', title: '', tracks: [song] };
+  return { source: 'YouTube', title: '', tracks: [song], single: true };
 }
 
 async function loadApple(cls, o) {
   const { text } = await safeFetch(`https://music.apple.com${cls.path}`, o);
-  return { source: 'Apple Music', ...parseApple(text, { trackId: cls.trackId }) };
+  const r = parseApple(text, { trackId: cls.trackId });
+  return { source: 'Apple Music', ...r, single: cls.kind === 'song' && r.selectedOnly === true };
 }
 
 async function loadLink(cls, o) {
@@ -282,18 +283,20 @@ async function expandLinks(text, { fetchImpl = globalThis.fetch, onStatus } = {}
   const out = [];
   const notes = [];
   const cache = new Map();
-  let inline = false; // true right after a header, so the next link joins that section
+  const singles = new Map(); // source -> number of songs that came from single-song links
+  let mode = 'none'; // 'header': next link joins that header's section; 'singles': running group of single-song links
   let done = 0;
 
   for (const raw of lines) {
     const urls = extractUrls(raw);
     if (!urls.length) {
       out.push(raw);
-      if (raw.trim()) inline = Boolean(matchHeader(raw));
+      if (raw.trim()) mode = matchHeader(raw) ? 'header' : 'none';
       continue;
     }
     let rest = raw.replace(URL_RE, ' ').replace(/^\s*(?:[-*•·▪►]|\d{1,3}[.)])\s+/, '');
     rest = clean(rest.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ''));
+    if (/^\d{1,4}$/.test(rest)) rest = ''; // "48 https://..." is a list number, not a section name
     let first = true;
 
     for (const url of urls) {
@@ -313,17 +316,25 @@ async function expandLinks(text, { fetchImpl = globalThis.fetch, onStatus } = {}
         continue;
       }
 
+      const single = Boolean(result.single);
       if (first && rest) {
         out.push(`${rest}:`);
-        inline = true;
-      } else if (!inline) {
+        mode = 'header';
+      } else if (single) {
+        // Single-song links all land in ONE section instead of one section per song.
+        if (mode === 'none') {
+          out.push('Unsorted:');
+          mode = 'singles';
+        }
+      } else if (mode !== 'header') {
         out.push(`${result.title || 'Unsorted'}:`);
-        inline = false;
+        mode = 'none';
       }
       first = false;
 
       for (const t of result.tracks) out.push(songLine(t));
-      notes.push({ level: 'info', text: `${result.source}: ${result.tracks.length} song${result.tracks.length === 1 ? '' : 's'}${result.title ? ` from "${result.title}"` : ''}` });
+      if (single) singles.set(result.source, (singles.get(result.source) || 0) + result.tracks.length);
+      else notes.push({ level: 'info', text: `${result.source}: ${result.tracks.length} song${result.tracks.length === 1 ? '' : 's'}${result.title ? ` from "${result.title}"` : ''}` });
       if (result.tracks.length >= TRUNCATION_HINT && result.source !== 'Apple Music') {
         notes.push({ level: 'warn', text: `${result.source} only shares the first ${TRUNCATION_HINT} songs of a playlist through a link. If the playlist is longer, upload an export (CSV) to get the rest.` });
       }
@@ -335,8 +346,9 @@ async function expandLinks(text, { fetchImpl = globalThis.fetch, onStatus } = {}
       }
     }
     // "Name - link" is self-contained: a later bare link starts its own section.
-    if (rest && !first) inline = false;
+    if (rest && !first) mode = 'none';
   }
+  for (const [source, n] of singles) notes.unshift({ level: 'info', text: `${source}: ${n} single song${n === 1 ? '' : 's'}` });
   return { text: out.join('\n'), notes };
 }
 

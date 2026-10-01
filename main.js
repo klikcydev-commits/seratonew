@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { parseList } = require('./core/parseList');
 const { scanLibrary } = require('./core/scanLibrary');
-const { buildIndex, matchAll, rankCandidates } = require('./core/matcher');
+const { buildIndex, matchAll, searchLibrary } = require('./core/matcher');
 const { writeCrates, defaultSeratoDir } = require('./core/serato');
 const { writeReports, collectFiles } = require('./core/report');
 const { assertTracksInLibrary } = require('./core/safety');
@@ -146,7 +146,7 @@ function registerIpc() {
 
   ipcMain.handle('library:search', (_e, query) => {
     if (!index) throw new Error('Scan your library first.');
-    return rankCandidates(index, String(query || ''), 8);
+    return searchLibrary(index, String(query || ''), 40);
   });
 
   ipcMain.handle('crates:write', (_e, payload) => {
