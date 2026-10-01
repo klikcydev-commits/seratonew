@@ -1,6 +1,6 @@
 {
   "name": "serato-set-builder",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Paste a client's song list, find the tracks in your library, and build Serato crates per moment (melodies, formalities, slow dance, cake cutting...).",
   "main": "main.js",
   "scripts": {

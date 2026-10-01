@@ -94,6 +94,7 @@ function togglePlay(c, btn) {
 
 /* ---------------- review ---------------- */
 
+const songs = (n) => `${n} song${n === 1 ? '' : 's'}`;
 const STATUS_LABEL = { matched: 'Found', review: 'Check', missing: 'Not found' };
 const FILTER_TITLE = { matched: 'Found', review: 'To check', missing: 'Not found' };
 
@@ -126,7 +127,7 @@ function renderSummary() {
     pill('matched', `${c.matched} found`),
     pill('review', `${c.review} to check`),
     pill('missing', `${c.missing} not found`),
-    el('span', { class: 'muted', text: `${selected} songs selected` }),
+    el('span', { class: 'muted', text: `${songs(selected)} selected` }),
   );
 }
 
@@ -230,14 +231,14 @@ function renderResults() {
   const list = $('sections');
   if (state.filter === 'all') {
     list.replaceChildren(...state.results.map((s) => el('div', { class: 'section' },
-      el('h3', {}, s.name, ' ', el('small', { text: `${s.items.length} songs` })),
+      el('h3', {}, s.name, ' ', el('small', { text: songs(s.items.length) })),
       ...s.items.map((it) => renderItem(it, s, false)))));
   } else {
     // One combined list across every playlist / moment.
     const rows = [];
     state.results.forEach((s) => s.items.forEach((it) => { if (statusOf(it) === state.filter) rows.push(renderItem(it, s, true)); }));
     list.replaceChildren(el('div', { class: 'section' },
-      el('h3', {}, FILTER_TITLE[state.filter], ' ', el('small', { text: `${rows.length} songs` })),
+      el('h3', {}, FILTER_TITLE[state.filter], ' ', el('small', { text: songs(rows.length) })),
       ...(rows.length ? rows : [el('div', { class: 'muted', text: 'Nothing here.' })])));
   }
   refreshAddTargets();

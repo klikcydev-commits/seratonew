@@ -81,7 +81,7 @@ function createWindow() {
     height: 820,
     minWidth: 860,
     minHeight: 600,
-    backgroundColor: '#0f1115',
+    backgroundColor: '#000000',
     title: 'Set Builder',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

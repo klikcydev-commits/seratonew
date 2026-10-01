@@ -52,6 +52,10 @@ npm run dist       # build a .dmg (macOS) / installer (Windows)
 - A crate can't hold per-track notes, so notes live in the crate name (the moment) and in the report/CSV.
 - The renderer is sandboxed (context isolation, CSP), and the main process only accepts track paths that are inside your scanned folders.
 
+## Branding
+
+The look follows the JDean by Afrah Events logo (gold `#f6da97 → #e5b563 → #d19b4a` on black). To change the logo, replace `renderer/logo.png` (header) and `build/icon.png` (app icon, square, 1024 px); colors are the variables at the top of `renderer/styles.css`.
+
 ## Verify once on your machine
 
 The crate file is written to the community-documented Serato format and round-trips in the tests, but I could not open Serato from here. Before a real event, create a test crate and confirm it appears with the right tracks. If Windows paths look wrong in Serato, the fix is in `core/serato.js` (`cratePath`).
